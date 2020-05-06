@@ -1,16 +1,16 @@
 import os
 import sys
-# import collections
-# sys.path.append(os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)),"src")))
 from bigquery import bigquery_connection
 from config import default_config
-from storage import storage_connection,storage_transfer
+from storage import storage_connection, storage_transfer
+
 
 class MigrationPlan():
-    def __init__(self,plan):
+    def __init__(self, plan):
         self.__plan = plan
         self.__migration_config = default_config.MIGRATION_CONFIG[plan]
-        self.__bigquery_client = bigquery_connection.BigQueryClient(project=self.__migration_config["source_project"]).bq_client
+        self.__bigquery_client = bigquery_connection.BigQueryClient(
+            project=self.__migration_config["source_project"]).bq_client
         # self.__storage_client = StorageConnection.StorageConnection(project=self.__migration_config["source_project"]).storage_client
         self.__asset_map = {}
         self.__information_schema_map = {}
@@ -32,15 +32,17 @@ class MigrationPlan():
     def asset_map(self):
         return self.__asset_map
 
-    def retrieve_information_schema(self,asset_type):
+    def retrieve_information_schema(self, asset_type):
         information_schema_asset_list = []
-        dataset_entity = self.__bigquery_client.get_dataset(self.__bigquery_client.project+'.'+self.__migration_config["source_dataset"])
+        dataset_entity = self.__bigquery_client.get_dataset(
+            self.__bigquery_client.project+'.'+self.__migration_config["source_dataset"])
         job_config = bigquery_connection.BigQueryJobConfig(
             client=self.__bigquery_client,
             args=default_config.INFORMATION_SCHEMA_CONFIG).job_config
 
         query_job = self.__bigquery_client.query(
-            query=default_config.INFORMATION_SCHEMA_QUERIES[asset_type].format(source_dataset=self.__migration_config["source_dataset"]),
+            query=default_config.INFORMATION_SCHEMA_QUERIES[asset_type].format(
+                source_dataset=self.__migration_config["source_dataset"]),
             location=dataset_entity.location,
             job_config=job_config)
 
@@ -53,21 +55,24 @@ class MigrationPlan():
         self.__information_schema_map[asset_type] = information_schema_asset_list
 
     def filter_base_tables(self):
-        return list(filter(lambda x: x['table_type'] == 'BASE TABLE',self.__information_schema_map["tables"]))
+        return list(filter(lambda x: x['table_type'] == 'BASE TABLE', self.__information_schema_map["tables"]))
 
     def show_information_schema_assets(self):
-        for k,v in self.__information_schema_map.items():
+        for k, v in self.__information_schema_map.items():
             print(k)
             for item in v:
                 print(item)
 
     def extract_source_assets(self):
         for dataset in self.__bigquery_client.list_datasets():
-            dataset_entity = self.__bigquery_client.get_dataset(dataset.full_dataset_id.replace(":","."))
+            dataset_entity = self.__bigquery_client.get_dataset(
+                dataset.full_dataset_id.replace(":", "."))
             if self.__migration_config["source_dataset"] == dataset.dataset_id:
                 for _ in self.__bigquery_client.list_tables(dataset.reference):
-                    self.__asset_map['tables'] = (_ for _ in self.__bigquery_client.list_tables(dataset.reference))
-                    self.__asset_map['access_entries'] = (_ for _ in dataset_entity.access_entries)
+                    self.__asset_map['tables'] = (
+                        _ for _ in self.__bigquery_client.list_tables(dataset.reference))
+                    self.__asset_map['access_entries'] = (
+                        _ for _ in dataset_entity.access_entries)
 
     def show_source_assets(self):
         for asset_type in self.__asset_map.keys():
@@ -76,7 +81,7 @@ class MigrationPlan():
                 if asset_type == 'tables':
                     print(_.reference.to_api_repr())
                 elif asset_type == 'access_entries':
-                    if _.entity_type in ['userByEmail','userByGroup','view']:
+                    if _.entity_type in ['userByEmail', 'userByGroup', 'view']:
                         print(_)
 
     # def create_transfer_config(self):

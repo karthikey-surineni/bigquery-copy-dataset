@@ -5,8 +5,9 @@ from google.oauth2 import service_account
 from google.cloud import storage
 import config.default_config as default_config
 
+
 class BigQueryClient():
-    def __init__(self,project=default_config.PROJECT,location=default_config.LOCATION,sa_path=default_config.SA_PATH):
+    def __init__(self, project=default_config.PROJECT, location=default_config.LOCATION, sa_path=default_config.SA_PATH):
         self.__project = project
         self.__location = location
         self.__sa_path = sa_path
@@ -19,21 +20,25 @@ class BigQueryClient():
                 filename=self.__sa_path,
                 scopes=["https://www.googleapis.com/auth/cloud-platform"]
             )
-            client = bigquery.Client(project=self.__project,credentials=credentials,location=self.__location)
+            client = bigquery.Client(
+                project=self.__project, credentials=credentials, location=self.__location)
             return client
         except Exception as e:
             print(e)
 
+
 class BigQueryJobConfig():
-    def __init__(self,client,destination="",args={}):
+    def __init__(self, client, destination="", args={}):
         self.__client = client
         self.__job_config = bigquery.QueryJobConfig()
         # For Information Schema queries below
         if destination is not "":
             self.__job_config.create_disposition = args["create_disposition"]
             self.__job_config.write_disposition = args["write_disposition"]
-            self.__job_config.destination_dataset = self.__client.dataset(args["destination_dataset"])
-            self.__job_config.destination = self.__job_config.destination_dataset.table(destination)
+            self.__job_config.destination_dataset = self.__client.dataset(
+                args["destination_dataset"])
+            self.__job_config.destination = self.__job_config.destination_dataset.table(
+                destination)
         super().__init__()
 
     @property
