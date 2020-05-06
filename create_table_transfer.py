@@ -13,13 +13,6 @@ from google.cloud import bigquery
 # "incidents_2010",
 # "incidents_2011",
 # ]
-# source_config = {}
-# destination_config = {}
-# source_bucket = "test_bucket_london"
-# sink_bucket = "test_bucket_au"
-# for _ in tables:
-#     source_config[_] = {"dataset":"test_london","bucket_name":source_bucket,"table":f"{_}"}
-#     destination_config[_] = {"dataset":"test_au","bucket_name":sink_bucket,"table":f"{_}"}
 
 def extract_transfer_tables(info_list):
     return (_['table_name'] for _ in info_list)
@@ -68,19 +61,35 @@ def transfer_files(source_bucket,sink_bucket):
         if(x!={}):
             print("{}..".format(x['operations'][0]['metadata']['status']))
 
-def create_transfer(table_list,source_dataset_ref,source_dataset_location,destination_dataset_ref,destination_dataset_location,source_bucket,sink_bucket):
+def create_views(client,source_dataset_ref,destination_dataset_ref,dataset_location,view_meta):
+    view_ref = destination_dataset_ref.table(view_meta["table_name"])
+    view = bigquery.Table(view_ref)
+    view.view_query  = view_meta["view_definition"].replace(source_dataset_ref.dataset_id,destination_dataset_ref.dataset_id)
+    view = client.create_table(view)
+    print("Successfully created view at {}".format(view.full_table_id))
+
+# def create_access_entries()
+
+def create_transfer(table_list,view_list,source_dataset_ref,source_dataset_location,destination_dataset_ref,destination_dataset_location,source_bucket,sink_bucket):
     queue_export_tables = []
     queue_import_tables = []
+    queue_views= []
     for table_name in table_list:
         print("Adding {} table for transfer".format(table_name))
         queue_export_tables.append(threading.Thread(target=table_export, args=(client,source_dataset_ref,source_dataset_location,table_name,source_bucket)))
-        queue_import_tables.append(threading.Thread(target=table_import, args=(client,destination_dataset_ref,destination_dataset_location,table_name,sink_bucket)))
-    #Step 1 - Run Export for all tables in source dataset
-    run_all_tasks(queue_export_tables)
-    #Step 2 - Run Transfer for all files across buckets
-    transfer_files(source_bucket,sink_bucket)
-    #Step 3 - Run Import for all files to tables in destination dataset
-    run_all_tasks(queue_import_tables)
+        queue_import_tables.append(threading.Thread(target=table_import, args=(client,source_dataset_ref,destination_dataset_ref,destination_dataset_location,table_name,sink_bucket)))
+    for view in view_list:
+        print("Adding {} view for transfer".format(view["table_name"]))
+        queue_views.append(threading.Thread(target=create_views, args=(client,source_dataset_ref,destination_dataset_ref,destination_dataset_location,view)))
+
+    # #Step 1 - Run Export for all tables in source dataset
+    # run_all_tasks(queue_export_tables)
+    # #Step 2 - Run Transfer for all files across buckets
+    # transfer_files(source_bucket,sink_bucket)
+    # #Step 3 - Run Import for all files to tables in destination dataset
+    # run_all_tasks(queue_import_tables)
+    #Step 4 - Run Import for all files to tables in destination dataset
+    run_all_tasks(queue_views)
 
 def run_all_tasks(tasks):
     for thread in tasks:
@@ -97,6 +106,8 @@ if __name__ == "__main__":
         source_bucket = m.migration_config["source_bucket"]
         sink_bucket = m.migration_config["sink_bucket"]
 
+        #Extracting Base tables
+        #-----------------------------
         m.retrieve_information_schema("tables")
         # m.show_information_schema_assets()
         table_list = extract_transfer_tables(m.filter_base_tables())
@@ -108,7 +119,13 @@ if __name__ == "__main__":
         # # Destination dataset for export
         destination_dataset_ref = client.dataset(destination_dataset_id, project=client.project)
         destination_dataset = client.get_dataset(client.project+'.'+destination_dataset_id)
-        create_transfer(table_list,source_dataset_ref,source_dataset.location,destination_dataset_ref,destination_dataset.location,source_bucket,sink_bucket)
+
+        #Extracting Views
+        #-----------------------------
+        m.retrieve_information_schema("views")
+        view_list = m.information_schema_map["views"]
+        create_transfer(table_list,view_list,source_dataset_ref,source_dataset.location,destination_dataset_ref,destination_dataset.location,source_bucket,sink_bucket)
+
 
     # except KeyError:
     #     print("Available Keys : ",default_config.MIGRATION_CONFIG.keys())

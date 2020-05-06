@@ -28,9 +28,13 @@ class MigrationPlan():
     def information_schema_map(self):
         return self.__information_schema_map
 
+    @property
+    def asset_map(self):
+        return self.__asset_map
+
     def retrieve_information_schema(self,asset_type):
-        dataset_entity = self.__bigquery_client.get_dataset(self.__bigquery_client.project+'.'+self.__migration_config["source_dataset"])
         information_schema_asset_list = []
+        dataset_entity = self.__bigquery_client.get_dataset(self.__bigquery_client.project+'.'+self.__migration_config["source_dataset"])
         job_config = bigquery_connection.BigQueryJobConfig(
             client=self.__bigquery_client,
             args=default_config.INFORMATION_SCHEMA_CONFIG).job_config
