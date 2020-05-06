@@ -56,10 +56,15 @@ def transfer_files(source_bucket,sink_bucket):
     transfer = storage_transfer.StorageTransfer(source_bucket=source_bucket,sink_bucket=sink_bucket)
     transfer.create_transfer()
     x = {}
+    # TODO: Checks only for 1st job in transfer run
+    # TODO: Crete logging for status
     while(x == {} or x['operations'][0]['metadata']['status']!='IN_PROGRESS'):
         x = transfer.get_transfer_status()
         if(x!={}):
             print("{}..".format(x['operations'][0]['metadata']['status']))
+
+    if (x['operations'][0]['metadata']['status']!='SUCCESS'):
+        transfer.remove_transfer()
 
 def create_views(client,source_dataset_ref,destination_dataset_ref,dataset_location,view_meta):
     view_ref = destination_dataset_ref.table(view_meta["table_name"])

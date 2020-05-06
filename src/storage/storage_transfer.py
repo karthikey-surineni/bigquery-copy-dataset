@@ -46,26 +46,14 @@ class StorageTransfer():
         #     json.dumps(result, indent=4, sort_keys=True)))
         return result
 
-
-# if __name__ == '__main__':
-#     parser = argparse.ArgumentParser(
-#         description=__doc__,
-#         formatter_class=argparse.RawDescriptionHelpFormatter)
-#     parser.add_argument('description', help='Transfer description.')
-#     parser.add_argument('project_id', help='Your Google Cloud project ID.')
-#     parser.add_argument('start_date', help='Date YYYY/MM/DD.')
-#     parser.add_argument('start_time', help='UTC Time (24hr) HH:MM:SS.')
-#     parser.add_argument('source_bucket', help='Standard GCS bucket name.')
-#     parser.add_argument('sink_bucket', help='Nearline GCS bucket name.')
-
-#     args = parser.parse_args()
-#     start_date = datetime.datetime.strptime(args.start_date, '%Y/%m/%d')
-#     start_time = datetime.datetime.strptime(args.start_time, '%H:%M:%S')
-
-#     main(
-#         args.description,
-#         args.project_id,
-#         start_date,
-#         start_time,
-#         args.source_bucket,
-#         args.sink_bucket)
+    def remove_transfer(self):
+        update_transfer_job_request_body = {
+            "transferJob": {
+                "status": "DELETED"
+                }
+            }
+        request = self.__storagetransfer.transferJobs().patch(jobName=self.__job_name, body=update_transfer_job_request_body)
+        response = request.execute()
+        print('Result of transferJob/patch: {}'.format(
+        json.dumps(response, indent=4, sort_keys=True)))
+        return response
