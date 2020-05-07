@@ -107,7 +107,7 @@ def create_transfer(table_list, view_list, source_dataset_ref, source_dataset_lo
     # Step 3 - Run Import for all files to tables in destination dataset
     run_all_tasks(queue_import_tables)
     # Step 4 - Run Import for all files to tables in destination dataset
-    # run_all_tasks(queue_views)
+    run_all_tasks(queue_views)
 
 
 def run_all_tasks(tasks):
