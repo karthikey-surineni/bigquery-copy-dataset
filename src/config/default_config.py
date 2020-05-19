@@ -1,7 +1,12 @@
 import os
+import logging
 import config.job_config as job_config
 from datetime import datetime
 from datetime import timedelta
+
+log = logging.getLogger(__file__)
+logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
+
 PROJECT = "dataflow-pubsub-django"
 LOCATION = "australia-southeast1"
 SA_PATH = os.path.join(os.path.dirname(os.path.abspath(
@@ -43,6 +48,7 @@ INFORMATION_SCHEMA_CONFIG = {
 INFORMATION_SCHEMA_QUERIES = {
     "views": "select * from {source_dataset}.INFORMATION_SCHEMA.VIEWS",
     "tables": "select * from {source_dataset}.INFORMATION_SCHEMA.TABLES",
+    "columns": "select * from {source_dataset}.INFORMATION_SCHEMA.COLUMNS"
 }
 utc_date = datetime.utcnow() + timedelta(seconds=30)
 STORAGE_TRANSFER_CONFIG = {

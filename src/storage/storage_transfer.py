@@ -1,20 +1,28 @@
 import argparse
 import datetime
 import json
+import os
+import logging
 import config.default_config as default_config
 from google.oauth2 import service_account
 from pprint import pprint
 import googleapiclient.discovery
 
+log = logging.getLogger(__file__)
+logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
 
 class StorageTransfer():
     def __init__(self, **args):
-        credentials = service_account.Credentials.from_service_account_file(
-            filename=default_config.SA_PATH,
-            scopes=["https://www.googleapis.com/auth/cloud-platform"]
-        )
-        self.__storagetransfer = googleapiclient.discovery.build(
-            'storagetransfer', 'v1', credentials=credentials)
+        if not os.path.isfile(default_config.SA_PATH):
+            self.__storagetransfer = googleapiclient.discovery.build(
+                'storagetransfer', 'v1')
+        else:
+            credentials = service_account.Credentials.from_service_account_file(
+                filename=default_config.SA_PATH,
+                scopes=["https://www.googleapis.com/auth/cloud-platform"]
+            )
+            self.__storagetransfer = googleapiclient.discovery.build(
+                'storagetransfer', 'v1', credentials=credentials)
         # request = self.__storagetransfer.googleServiceAccounts().get(projectId=default_config.PROJECT)
         # response = request.execute()
         # pprint(response)

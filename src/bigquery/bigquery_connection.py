@@ -1,10 +1,13 @@
 import json
+import logging
 import os
 from google.cloud import bigquery
 from google.oauth2 import service_account
 from google.cloud import storage
 import config.default_config as default_config
 
+log = logging.getLogger(__file__)
+logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
 
 class BigQueryClient():
     def __init__(self, project=default_config.PROJECT, location=default_config.LOCATION, sa_path=default_config.SA_PATH):
@@ -16,13 +19,16 @@ class BigQueryClient():
     @property
     def bq_client(self):
         try:
-            credentials = service_account.Credentials.from_service_account_file(
-                filename=self.__sa_path,
-                scopes=["https://www.googleapis.com/auth/cloud-platform"]
-            )
-            client = bigquery.Client(
-                project=self.__project, credentials=credentials, location=self.__location)
-            return client
+            if not os.path.isfile(self.__sa_path):
+                return bigquery.Client(project=self.__project)
+            else:
+                credentials = service_account.Credentials.from_service_account_file(
+                    filename=self.__sa_path,
+                    scopes=["https://www.googleapis.com/auth/cloud-platform"]
+                )
+                client = bigquery.Client(
+                    project=self.__project, credentials=credentials, location=self.__location)
+                return client
         except Exception as e:
             print(e)
 
@@ -32,7 +38,7 @@ class BigQueryJobConfig():
         self.__client = client
         self.__job_config = bigquery.QueryJobConfig()
         # For Information Schema queries below
-        if destination is not "":
+        if destination != "":
             self.__job_config.create_disposition = args["create_disposition"]
             self.__job_config.write_disposition = args["write_disposition"]
             self.__job_config.destination_dataset = self.__client.dataset(

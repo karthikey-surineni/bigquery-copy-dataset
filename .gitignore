@@ -1,3 +1,5 @@
 __pycache*
 *vscode
 *json
+*target/
+*dbt_modules/
