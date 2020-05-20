@@ -1,9 +1,0 @@
-sources:
-- name: test_AU
-  tables:
-  - {name: incidents_2011}
-  - {name: incidents_2008}
-  - {name: incidents_2016}
-  - {name: incidents_2009}
-  - {name: incidents_2010}
-version: 2

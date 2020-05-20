@@ -1,1 +1,0 @@
-SELECT * FROM {{ ref('vw_lvl2_incidents_2008') }}

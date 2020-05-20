@@ -12,6 +12,7 @@ import yaml
 import collections
 import threading
 import re
+import time
 
 log = logging.getLogger(__file__)
 logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
@@ -65,6 +66,7 @@ def transfer_files(source_bucket, sink_bucket):
     transfer.create_transfer()
     response = {}
     while(response == {} or response['operations'][0]['metadata']['status'] == 'IN_PROGRESS'):
+        time.sleep(12)
         response = transfer.get_transfer_status()
         if(response != {}):
             log.info("{}..".format(

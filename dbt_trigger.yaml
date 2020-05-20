@@ -1,13 +1,19 @@
 
 steps:
-# - id: 'Add user group permissions for dbt_user'
-#   name: 'python:3.8.2-slim-buster'
-#   entrypoint: '/bin/sh'
-#   args:
-#   - -c
-#   - |
+- id: 'Run dataset table transfer'
+  name: 'python:3.8.2-slim-buster'
+  entrypoint: '/bin/sh'
+  args:
+  - -c
+  - |
+    ls src/dbt;
+    pip install -r requirements.txt;
+    python create_table_transfer.py
+
 - id: 'Transfer views in dataset'
   name: 'python:3.8.2-slim-buster'
+  waitFor:
+  - 'Run dataset table transfer'
   entrypoint: '/bin/sh'
   args:
   - -c
@@ -15,17 +21,14 @@ steps:
     set -x;
     sh install_dbt.sh;
     cd src/dbt;
-    # chmod u+r+x logs/dbt.log;
-    # cat logs/dbt.log;
-    # whoami;
-    export DBT_PROFILES_DIR=.;
-    ls -l src/dbt;
-    cat /etc/passwd;
-    dbt --version;
     # dbt init dbt_test;
-    # export DBT_PROFILES_DIR=dbt_test;
-    # cp src/dbt/{profiles.yml,dbt_project.yml} dbt_test;
-    # cp -r src/dbt/models dbt_test/models;
     # cd dbt_test;
+    export DBT_PROFILES_DIR=.;
+    # cp src/dbt/{profiles.yml,dbt_project.yml} dbt_test;
+    # cp -r src/dbt/models/ dbt_test/models;
     dbt debug;
     dbt run
+
+timeout: 1000s
+options:
+    machineType: N1_HIGHCPU_8

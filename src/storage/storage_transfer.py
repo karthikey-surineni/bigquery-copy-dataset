@@ -15,7 +15,7 @@ class StorageTransfer():
     def __init__(self, **args):
         if not os.path.isfile(default_config.SA_PATH):
             self.__storagetransfer = googleapiclient.discovery.build(
-                'storagetransfer', 'v1')
+                'storagetransfer', 'v1',cache_discovery=False)
         else:
             credentials = service_account.Credentials.from_service_account_file(
                 filename=default_config.SA_PATH,
